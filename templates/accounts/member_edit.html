@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Edit Member{% endblock %}
+{% block page_title %}<span>Edit {{ member_user.get_full_name|default:member_user.username }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-heading">Edit Member</h2>
+    <p class="page-subtitle">Update member details</p>
+</div>
+
+<div class="card card-narrow">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if user_form.errors or profile_form.errors %}
+            <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> Please correct the errors below.</div>
+            {% endif %}
+            <div class="form-row">
+                <div class="form-group"><label>First Name</label>{{ user_form.first_name }}</div>
+                <div class="form-group"><label>Last Name</label>{{ user_form.last_name }}</div>
+            </div>
+            <div class="form-group"><label>Email</label>{{ user_form.email }}</div>
+            <div class="form-row">
+                <div class="form-group"><label>Phone</label>{{ profile_form.phone }}</div>
+                <div class="form-group"><label>Department</label>{{ profile_form.department }}</div>
+            </div>
+            <div class="form-group"><label>Address</label>{{ profile_form.address }}</div>
+            <div class="form-group"><label>Profile Image</label>{{ profile_form.profile_image }}</div>
+            <div class="form-group form-check">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="is_active_member" {% if profile.is_active_member %}checked{% endif %}>
+                    Active Member
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+                <a href="{% url 'member_detail' member_user.pk %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

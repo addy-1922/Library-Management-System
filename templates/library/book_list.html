@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Books{% endblock %}
+{% block page_title %}<span>Books</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Book Catalog</h2>
+        <p class="page-subtitle">Browse, search and filter available books</p>
+    </div>
+    {% if user.is_staff or user.is_superuser %}
+    <div class="page-actions">
+        <a href="{% url 'book_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Book</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="filter-form">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="query" value="{{ search_form.query.value|default:'' }}" class="form-control" placeholder="Search by title, ISBN, author, category...">
+            </div>
+            <div class="form-group">
+                {{ search_form.category }}
+            </div>
+            <div class="form-group">
+                {{ search_form.author }}
+            </div>
+            <div class="form-group">
+                {{ search_form.availability }}
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Apply</button>
+            <a href="{% url 'book_list' %}" class="btn btn-outline">Reset</a>
+        </form>
+
+        {% if books %}
+        <div class="book-grid">
+            {% for book in books %}
+            <div class="book-card">
+                <a href="{% url 'book_detail' book.pk %}" class="book-cover-link">
+                    {% if book.cover_image %}
+                    <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-cover">
+                    {% else %}
+                    <div class="book-cover book-cover-placeholder"><i class="fas fa-book"></i></div>
+                    {% endif %}
+                </a>
+                <div class="book-info">
+                    <h4 class="book-title"><a href="{% url 'book_detail' book.pk %}">{{ book.title|truncatechars:40 }}</a></h4>
+                    <p class="book-author">{{ book.author.name }}</p>
+                    <div class="book-meta">
+                        <span class="badge badge-{% if book.availability_status == 'available' %}green{% elif book.availability_status == 'limited' %}orange{% else %}red{% endif %}">
+                            {{ book.availability_label }}
+                        </span>
+                        <span class="badge badge-outline">{{ book.available_copies }} avail.</span>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-book-open"></i>
+            <h3>No books found</h3>
+            <p>Try adjusting your search or filters.</p>
+        </div>
+        {% endif %}
+
+        {% if books.has_other_pages %}
+        <div class="pagination">
+            <span class="page-info">Page {{ books.number }} of {{ books.paginator.num_pages }}</span>
+            <div class="pagination-buttons">
+                {% if books.has_previous %}
+                <a href="?page={{ books.previous_page_number }}&query={{ search_form.query.value|default:'' }}&category={{ search_form.category.value|default:'' }}&author={{ search_form.author.value|default:'' }}&availability={{ search_form.availability.value|default:'' }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-left"></i> Prev</a>
+                {% endif %}
+                {% if books.has_next %}
+                <a href="?page={{ books.next_page_number }}&query={{ search_form.query.value|default:'' }}&category={{ search_form.category.value|default:'' }}&author={{ search_form.author.value|default:'' }}&availability={{ search_form.availability.value|default:'' }}" class="btn btn-sm btn-outline">Next <i class="fas fa-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Categories{% endblock %}
+{% block page_title %}<span>Categories</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Book Categories</h2>
+        <p class="page-subtitle">Organize books by category</p>
+    </div>
+    {% if user.is_staff or user.is_superuser %}
+    <div class="page-actions">
+        <a href="{% url 'category_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Category</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="search-bar-wrap">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search categories...">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+            {% if query %}<a href="{% url 'category_list' %}" class="btn btn-outline">Clear</a>{% endif %}
+        </form>
+
+        {% if categories %}
+        <div class="grid-3">
+            {% for category in categories %}
+            <div class="card card-hover">
+                <div class="card-body">
+                    <h3 class="entity-title"><a href="{% url 'category_detail' category.pk %}">{{ category.name }}</a></h3>
+                    <p class="entity-desc">{{ category.description|default:'No description' }}</p>
+                    <div class="entity-footer">
+                        <span class="badge badge-purple">{{ category.book_count_val }} books</span>
+                        <div class="entity-actions">
+                            <a href="{% url 'category_detail' category.pk %}" class="btn btn-sm btn-outline"><i class="fas fa-eye"></i></a>
+                            {% if user.is_staff or user.is_superuser %}<a href="{% url 'category_edit' category.pk %}" class="btn btn-sm btn-outline"><i class="fas fa-edit"></i></a>{% endif %}
+                            {% if user.is_superuser %}
+                            <form method="post" action="{% url 'category_delete' category.pk %}" class="inline-form" onsubmit="return confirm('Delete this category?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-tags"></i><h3>No categories found</h3><p>No categories match your search.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

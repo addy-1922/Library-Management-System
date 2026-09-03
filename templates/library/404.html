@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div class="error-page">
+    <div class="error-code">404</div>
+    <h1 class="error-title">Page Not Found</h1>
+    <p class="error-message">The page you are looking for doesn't exist or has been moved.</p>
+    <div class="error-actions">
+        <a href="{% url 'dashboard' %}" class="btn btn-primary"><i class="fas fa-home"></i> Go to Dashboard</a>
+    </div>
+</div>
+{% endblock %}

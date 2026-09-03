@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block title %}Reports{% endblock %}
+{% block page_title %}<span>Reports</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Library Reports</h2>
+        <p class="page-subtitle">Overview of library statistics and performance</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'export_books' %}" class="btn btn-outline"><i class="fas fa-file-csv"></i> Books CSV</a>
+        <a href="{% url 'export_members' %}" class="btn btn-outline"><i class="fas fa-file-csv"></i> Members CSV</a>
+        <a href="{% url 'export_history' %}" class="btn btn-outline"><i class="fas fa-file-csv"></i> History CSV</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_books }}</span><span class="stat-label">Total Books</span></div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-layer-group"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_copies }}</span><span class="stat-label">Total Copies</span></div>
+    </div>
+    <div class="stat-card stat-orange">
+        <div class="stat-icon"><i class="fas fa-basket-shopping"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_issued }}</span><span class="stat-label">Currently Issued</span></div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-rotate-left"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_returned }}</span><span class="stat-label">Returned</span></div>
+    </div>
+    <div class="stat-card stat-red">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_overdue }}</span><span class="stat-label">Overdue</span></div>
+    </div>
+    <div class="stat-card stat-dark">
+        <div class="stat-icon"><i class="fas fa-prescription-bottle"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_lost }}</span><span class="stat-label">Lost</span></div>
+    </div>
+    <div class="stat-card stat-purple">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info"><span class="stat-value">{{ total_members }}</span><span class="stat-label">Active Members</span></div>
+    </div>
+    <div class="stat-card stat-indigo">
+        <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+        <div class="stat-info"><span class="stat-value">₹{{ total_fines|floatformat:2 }}</span><span class="stat-label">Total Fines</span></div>
+    </div>
+</div>
+
+<div class="reports-fines">
+    <div class="card">
+        <div class="card-header"><h3><i class="fas fa-coins"></i> Fine Breakdown</h3></div>
+        <div class="card-body">
+            <div class="fine-breakdown">
+                <div class="fine-item">
+                    <span class="fine-label">Total Fines Charged</span>
+                    <span class="fine-value">₹{{ total_fines|floatformat:2 }}</span>
+                </div>
+                <div class="fine-item">
+                    <span class="fine-label">Collected (Returned)</span>
+                    <span class="fine-value fine-green">₹{{ collected_fines|floatformat:2 }}</span>
+                </div>
+                <div class="fine-item">
+                    <span class="fine-label">Pending / Outstanding</span>
+                    <span class="fine-value fine-red">₹{{ pending_fines|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <section class="card">
+        <div class="card-header"><h3><i class="fas fa-star"></i> Most Borrowed Books</h3></div>
+        <div class="card-body table-responsive">
+            {% if popular_books %}
+            <table class="table table-hover">
+                <thead><tr><th>#</th><th>Book</th><th>Author</th><th>Borrowings</th></tr></thead>
+                <tbody>
+                    {% for book in popular_books %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><a href="{% url 'book_detail' book.pk %}" class="table-link">{{ book.title }}</a></td>
+                        <td>{{ book.author.name }}</td>
+                        <td><span class="badge badge-purple">{{ book.borrow_count }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-star"></i><p>No data yet</p></div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header"><h3><i class="fas fa-user-check"></i> Most Active Members</h3></div>
+        <div class="card-body table-responsive">
+            {% if active_members %}
+            <table class="table table-hover">
+                <thead><tr><th>#</th><th>Member</th><th>Borrowings</th></tr></thead>
+                <tbody>
+                    {% for u in active_members %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td><a href="{% url 'member_detail' u.pk %}" class="table-link">{{ u.get_full_name|default:u.username }}</a></td>
+                        <td><span class="badge badge-blue">{{ u.borrow_count }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-user-check"></i><p>No data yet</p></div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+<section class="card">
+    <div class="card-header"><h3><i class="fas fa-tags"></i> Books by Category</h3></div>
+    <div class="card-body table-responsive">
+        {% if category_stats %}
+        <table class="table table-hover">
+            <thead><tr><th>Category</th><th>Books</th></tr></thead>
+            <tbody>
+                {% for c in category_stats %}
+                <tr>
+                    <td>{{ c.name }}</td>
+                    <td><span class="badge badge-purple">{{ c.book_count_val }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-tags"></i><p>No categories yet</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

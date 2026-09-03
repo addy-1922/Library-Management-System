@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}My Wishlist{% endblock %}
+{% block page_title %}<span><i class="fas fa-heart"></i> My Wishlist</span>{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-heart"></i> Saved Books ({{ items|length }})</h3>
+    </div>
+    <div class="card-body table-responsive">
+        {% if items %}
+        <table class="table table-hover">
+            <thead><tr><th>Book</th><th>Author</th><th>Availability</th><th>Action</th></tr></thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td><a href="{% url 'book_detail' item.book.pk %}">{{ item.book.title }}</a></td>
+                    <td>{{ item.book.author.name }}</td>
+                    <td>
+                        {% if item.book.is_available %}<span class="badge badge-green">Available</span>
+                        {% else %}<span class="badge badge-red">Unavailable</span>{% endif %}
+                    </td>
+                    <td>
+                        <form method="post" action="{% url 'toggle_wishlist' item.book.pk %}" class="inline-form">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-sm btn-outline"><i class="fas fa-times"></i> Remove</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-heart"></i><p>Your wishlist is empty. Browse books and save the ones you are interested in.</p></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

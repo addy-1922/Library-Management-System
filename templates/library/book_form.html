@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}{{ action }} Book{% endblock %}
+{% block page_title %}<span>{{ action }} Book</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumbs">
+        <a href="{% url 'dashboard' %}">Home</a> /
+        <a href="{% url 'book_list' %}">Books</a> /
+        <span>{{ action }} Book</span>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% if form.non_field_errors %}
+            <div class="alert alert-error"><i class="fas fa-exclamation-circle"></i> {{ form.non_field_errors }}</div>
+            {% endif %}
+            <div class="form-group">
+                <label for="id_title">Title *</label>
+                {{ form.title }}
+                {% if form.title.errors %}<small class="error-text">{{ form.title.errors }}</small>{% endif %}
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_isbn">ISBN *</label>
+                    {{ form.isbn }}
+                    {% if form.isbn.errors %}<small class="error-text">{{ form.isbn.errors }}</small>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_publication_date">Publication Date</label>
+                    {{ form.publication_date }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_author">Author *</label>
+                    {{ form.author }}
+                    {% if form.author.errors %}<small class="error-text">{{ form.author.errors }}</small>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_category">Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="form-group">
+                    <label for="id_publisher">Publisher</label>
+                    {{ form.publisher }}
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="id_total_copies">Total Copies *</label>
+                    {{ form.total_copies }}
+                    {% if form.total_copies.errors %}<small class="error-text">{{ form.total_copies.errors }}</small>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_available_copies">Available Copies</label>
+                    {{ form.available_copies }}
+                    {% if form.available_copies.errors %}<small class="error-text">{{ form.available_copies.errors }}</small>{% endif %}
+                </div>
+                <div class="form-group">
+                    <label for="id_shelf_location">Shelf Location</label>
+                    {{ form.shelf_location }}
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="id_description">Description</label>
+                {{ form.description }}
+            </div>
+            <div class="form-group">
+                <label for="id_cover_image">Cover Image</label>
+                {% if book and book.cover_image %}
+                <div class="current-image"><img src="{{ book.cover_image.url }}" alt="" width="60"></div>
+                {% endif %}
+                {{ form.cover_image }}
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save {% if action == 'Add' %}Book{% endif %}</button>
+                <a href="{% url 'book_list' %}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

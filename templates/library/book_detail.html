@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }}{% endblock %}
+{% block page_title %}<span>{{ book.title|truncatechars:40 }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumbs">
+        <a href="{% url 'dashboard' %}">Home</a> /
+        <a href="{% url 'book_list' %}">Books</a> /
+        <span>{{ book.title|truncatechars:30 }}</span>
+    </div>
+    <div class="page-actions">
+        {% if user.is_staff or user.is_superuser %}
+        <a href="{% url 'book_edit' book.pk %}" class="btn btn-outline"><i class="fas fa-edit"></i> Edit</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="book-detail-wrapper">
+    <div class="book-detail-cover">
+        {% if book.cover_image %}
+        <img src="{{ book.cover_image.url }}" alt="{{ book.title }}" class="book-detail-image">
+        {% else %}
+        <div class="book-detail-image-placeholder"><i class="fas fa-book-open"></i></div>
+        {% endif %}
+        <div class="book-status-badges">
+            <span class="badge badge-{% if book.availability_status == 'available' %}green{% elif book.availability_status == 'limited' %}orange{% else %}red{% endif %} badge-large">
+                {{ book.availability_label }}
+            </span>
+        </div>
+    </div>
+
+    <div class="book-detail-info">
+        <h1 class="book-detail-title">{{ book.title }}</h1>
+        <p class="book-detail-author">by
+            {% if author_detail %}<a href="{% url 'author_detail' book.author.pk %}">{{ book.author.name }}</a>
+            {% else %}{{ book.author.name }}{% endif %}
+        </p>
+        <p class="book-detail-desc">{{ book.description|default:'No description available.' }}</p>
+
+        <div class="book-detail-grid">
+            <div class="detail-item"><span class="detail-label">ISBN</span><span class="detail-value">{{ book.isbn }}</span></div>
+            <div class="detail-item"><span class="detail-label">Category</span>
+                <span class="detail-value">{% if book.category %}<a href="{% url 'category_detail' book.category.pk %}">{{ book.category.name }}</a>{% else %}—{% endif %}</span>
+            </div>
+            <div class="detail-item"><span class="detail-label">Publisher</span>
+                <span class="detail-value">{% if book.publisher %}<a href="{% url 'publisher_detail' book.publisher.pk %}">{{ book.publisher.name }}</a>{% else %}—{% endif %}</span>
+            </div>
+            <div class="detail-item"><span class="detail-label">Publication Date</span><span class="detail-value">{{ book.publication_date|default:'—' }}</span></div>
+            <div class="detail-item"><span class="detail-label">Shelf Location</span><span class="detail-value">{{ book.shelf_location|default:'—' }}</span></div>
+        </div>
+
+        <div class="book-availability">
+            <div class="availability-item">
+                <span class="availability-num">{{ book.total_copies }}</span>
+                <span class="availability-lab">Total Copies</span>
+            </div>
+            <div class="availability-item">
+                <span class="availability-num">{{ book.available_copies }}</span>
+                <span class="availability-lab">Available</span>
+            </div>
+            <div class="availability-item">
+                <span class="availability-num">{{ book.borrow_count }}</span>
+                <span class="availability-lab">Times Borrowed</span>
+            </div>
+            <div class="availability-item">
+                <span class="availability-num">{% if book.rating_count %}{{ book.average_rating }}<i class="fas fa-star rating-star"></i>{% else %}—{% endif %}</span>
+                <span class="availability-lab">Rating ({{ book.rating_count }})</span>
+            </div>
+        </div>
+
+        {% if user.is_authenticated %}
+        <div class="book-actions">
+            {% if book.is_available %}
+            <a href="{% url 'issue_book' %}" class="btn btn-primary"><i class="fas fa-book-open"></i> Borrow Book</a>
+            {% else %}
+            <form method="post" action="{% url 'reserve_book' book.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline" {% if has_reservation %}disabled{% endif %}>
+                    <i class="fas fa-bookmark"></i> {% if has_reservation %}Reserved{% else %}Reserve{% endif %}
+                </button>
+            </form>
+            <form method="post" action="{% url 'toggle_wishlist' book.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">
+                    <i class="fas {% if in_wishlist %}fa-heart{% else %}fa-heart-o{% endif %}"></i>
+                    {% if in_wishlist %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}
+                </button>
+            </form>
+            {% endif %}
+            <form method="post" action="{% url 'toggle_wishlist' book.pk %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline">
+                    <i class="fas {% if in_wishlist %}fa-heart{% else %}fa-heart-o{% endif %}"></i>
+                    {% if in_wishlist %}Remove from Wishlist{% else %}Add to Wishlist{% endif %}
+                </button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if user.is_staff or user.is_superuser %}
+<section class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-clock-rotate-left"></i> Recent Borrowings</h3>
+    </div>
+    <div class="card-body table-responsive">
+        {% if recent_borrows %}
+        <table class="table table-hover">
+            <thead><tr><th>Member</th><th>Issue Date</th><th>Due Date</th><th>Return Date</th><th>Status</th></tr></thead>
+            <tbody>
+                {% for record in recent_borrows %}
+                <tr>
+                    <td>{{ record.member.get_full_name|default:record.member.username }}</td>
+                    <td>{{ record.issue_date }}</td>
+                    <td>{{ record.due_date }}</td>
+                    <td>{{ record.return_date|default:'—' }}</td>
+                    <td>
+                        {% if record.status == 'issued' %}<span class="badge badge-blue">Issued</span>
+                        {% elif record.status == 'returned' %}<span class="badge badge-green">Returned</span>
+                        {% elif record.status == 'overdue' %}<span class="badge badge-red">Overdue</span>
+                        {% else %}<span class="badge badge-dark">Lost</span>{% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-clock-rotate-left"></i><p>No borrowing records</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endif %}
+
+<section class="card" style="margin-top: 20px;">
+    <div class="card-header">
+        <h3><i class="fas fa-star"></i> Reviews & Ratings</h3>
+    </div>
+    <div class="card-body">
+        {% if user.is_authenticated %}
+        <div class="review-form">
+            {% if user_review %}
+            <p class="review-mine">
+                Your review: <strong>{{ user_review.rating }}<i class="fas fa-star rating-star"></i></strong>
+                {% if user_review.comment %} — {{ user_review.comment }}{% endif %}
+                <form method="post" action="{% url 'delete_review' user_review.pk %}" class="inline-form">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-sm btn-danger"><i class="fas fa-trash"></i> Remove</button>
+                </form>
+            </p>
+            {% endif %}
+            <form method="post" action="{% url 'review_book' book.pk %}" class="review-form-inner">
+                {% csrf_token %}
+                <div class="rating-input">
+                    <label>Your rating:</label>
+                    <div class="star-rating">
+                        {% for i in "12345" %}
+                        <input type="radio" name="rating" id="star{{ forloop.counter }}" value="{{ forloop.counter }}" {% if user_review and user_review.rating == forloop.counter %}checked{% endif %}>
+                        <label for="star{{ forloop.counter }}" title="{{ forloop.counter }} star"><i class="fas fa-star"></i></label>
+                        {% endfor %}
+                    </div>
+                </div>
+                <textarea name="comment" rows="3" placeholder="Share your thoughts (optional)">{{ user_review.comment|default:'' }}</textarea>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> {% if user_review %}Update Review{% else %}Submit Review{% endif %}</button>
+            </form>
+        </div>
+        <hr>
+        {% endif %}
+
+        {% if reviews %}
+        <div class="reviews-list">
+            {% for review in reviews %}
+            <div class="review-item">
+                <div class="review-head">
+                    <strong>{{ review.user.get_full_name|default:review.user.username }}</strong>
+                    <span class="review-rating">
+                        {% for i in "12345" %}
+                        <i class="fas fa-star {% if forloop.counter <= review.rating %}rating-star{% else %}rating-star-empty{% endif %}"></i>
+                        {% endfor %}
+                    </span>
+                </div>
+                {% if review.comment %}<p class="review-comment">{{ review.comment }}</p>{% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-star"></i><p>No reviews yet. Be the first to rate this book.</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

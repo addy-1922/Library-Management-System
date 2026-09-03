@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% block title %}Authors{% endblock %}
+{% block page_title %}<span>Authors</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Authors</h2>
+        <p class="page-subtitle">Browse all book authors</p>
+    </div>
+    {% if user.is_staff or user.is_superuser %}
+    <div class="page-actions">
+        <a href="{% url 'author_create' %}" class="btn btn-primary"><i class="fas fa-plus"></i> Add Author</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="search-bar-wrap">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search authors...">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+            {% if query %}<a href="{% url 'author_list' %}" class="btn btn-outline">Clear</a>{% endif %}
+        </form>
+
+        <div class="table-responsive">
+            {% if authors %}
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Author</th><th>Nationality</th><th>Books</th><th>Actions</th></tr>
+                </thead>
+                <tbody>
+                    {% for author in authors %}
+                    <tr>
+                        <td><a href="{% url 'author_detail' author.pk %}" class="table-link">{{ author.name }}</a></td>
+                        <td>{{ author.nationality|default:'—' }}</td>
+                        <td><span class="badge badge-purple">{{ author.book_count_val }} books</span></td>
+                        <td class="actions-cell">
+                            <a href="{% url 'author_detail' author.pk %}" class="btn btn-sm btn-outline" title="View"><i class="fas fa-eye"></i></a>
+                            {% if user.is_staff or user.is_superuser %}
+                            <a href="{% url 'author_edit' author.pk %}" class="btn btn-sm btn-outline" title="Edit"><i class="fas fa-edit"></i></a>
+                            {% endif %}
+                            {% if user.is_superuser %}
+                            <form method="post" action="{% url 'author_delete' author.pk %}" class="inline-form" onsubmit="return confirm('Delete this author?');">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-danger" title="Delete"><i class="fas fa-trash"></i></button>
+                            </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-user-pen"></i><h3>No authors found</h3><p>No authors match your search.</p></div>
+            {% endif %}
+        </div>
+
+        {% if authors.has_other_pages %}
+        <div class="pagination">
+            <span class="page-info">Page {{ authors.number }} of {{ authors.paginator.num_pages }}</span>
+            <div class="pagination-buttons">
+                {% if authors.has_previous %}
+                <a href="?q={{ query }}&page={{ authors.previous_page_number }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-left"></i></a>
+                {% endif %}
+                {% if authors.has_next %}
+                <a href="?q={{ query }}&page={{ authors.next_page_number }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

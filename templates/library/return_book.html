@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Return Book{% endblock %}
+{% block page_title %}<span>Return Book</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumbs">
+        <a href="{% url 'dashboard' %}">Home</a> / <span>Return Book</span>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'issue_book' %}" class="btn btn-primary"><i class="fas fa-basket-shopping"></i> Issue Book</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="search-bar-wrap">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by book title, ISBN, or member...">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+            {% if query %}<a href="{% url 'return_book' %}" class="btn btn-outline">Clear</a>{% endif %}
+        </form>
+
+        <div class="table-responsive">
+            {% if active_records %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        <th>Member</th>
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Days Overdue</th>
+                        <th>Estimated Fine</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in active_records %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'book_detail' record.book.pk %}" class="table-link">{{ record.book.title }}</a>
+                            <small class="muted">{{ record.book.isbn }}</small>
+                        </td>
+                        <td>{{ record.member.get_full_name|default:record.member.username }}</td>
+                        <td>{{ record.issue_date }}</td>
+                        <td>{{ record.due_date }}</td>
+                        <td>
+                            {% if record.days_overdue > 0 %}
+                            <span class="badge badge-red">{{ record.days_overdue }} days</span>
+                            {% else %}
+                            <span class="badge badge-green">On time</span>
+                            {% endif %}
+                        </td>
+                        <td>₹{{ record.calculated_fine|floatformat:2 }}</td>
+                        <td>
+                            {% if record.status == 'overdue' %}
+                            <span class="badge badge-red">Overdue</span>
+                            {% else %}
+                            <span class="badge badge-blue">Issued</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <form method="post" action="{% url 'return_book_confirm' record.pk %}" onsubmit="return confirmReturn()">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="fas fa-rotate-left"></i> Return
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-check-circle"></i><h3>No books to return</h3><p>All issued books have been returned.</p></div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function confirmReturn() {
+    return confirm('Are you sure you want to return this book?');
+}
+</script>
+{% endblock %}

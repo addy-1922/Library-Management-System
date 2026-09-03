@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ publisher.name }}{% endblock %}
+{% block page_title %}<span>{{ publisher.name|truncatechars:40 }}</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="breadcrumbs">
+        <a href="{% url 'dashboard' %}">Home</a> / <a href="{% url 'publisher_list' %}">Publishers</a> / <span>{{ publisher.name }}</span>
+    </div>
+    {% if user.is_staff or user.is_superuser %}
+    <div class="page-actions"><a href="{% url 'publisher_edit' publisher.pk %}" class="btn btn-outline"><i class="fas fa-edit"></i> Edit</a></div>
+    {% endif %}
+</div>
+
+<div class="card card-narrow">
+    <div class="card-body">
+        <h2 class="entity-title">{{ publisher.name }}</h2>
+        <div class="entity-meta">
+            <span class="badge badge-purple">{{ books|length }} books</span>
+        </div>
+        <div class="entity-details">
+            {% if publisher.email %}<p><i class="fas fa-envelope"></i> {{ publisher.email }}</p>{% endif %}
+            {% if publisher.phone %}<p><i class="fas fa-phone"></i> {{ publisher.phone }}</p>{% endif %}
+            {% if publisher.address %}<p><i class="fas fa-location-dot"></i> {{ publisher.address }}</p>{% endif %}
+        </div>
+    </div>
+</div>
+
+<section class="card">
+    <div class="card-header"><h3><i class="fas fa-book"></i> Books Published</h3></div>
+    <div class="card-body">
+        {% if books %}
+        <div class="book-grid">
+            {% for book in books %}
+            <div class="book-card">
+                <a href="{% url 'book_detail' book.pk %}" class="book-cover-link">
+                    {% if book.cover_image %}<img src="{{ book.cover_image.url }}" alt="" class="book-cover">
+                    {% else %}<div class="book-cover book-cover-placeholder"><i class="fas fa-book"></i></div>{% endif %}
+                </a>
+                <div class="book-info">
+                    <h4 class="book-title"><a href="{% url 'book_detail' book.pk %}">{{ book.title|truncatechars:40 }}</a></h4>
+                    <p class="book-author">{{ book.author.name }}</p>
+                    <span class="badge badge-{% if book.availability_status == 'available' %}green{% elif book.availability_status == 'limited' %}orange{% else %}red{% endif %}">{{ book.availability_label }}</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-book-open"></i><p>No books from this publisher.</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

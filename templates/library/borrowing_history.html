@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Borrowing History{% endblock %}
+{% block page_title %}<span>Borrowing History</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Borrowing History</h2>
+        <p class="page-subtitle">Track all book borrowing records</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="filter-form">
+            <div class="form-group">
+                <select name="status" class="form-control" onchange="this.form.submit()">
+                    <option value="" {% if not status_filter %}selected{% endif %}>All Statuses</option>
+                    <option value="issued" {% if status_filter == 'issued' %}selected{% endif %}>Issued</option>
+                    <option value="returned" {% if status_filter == 'returned' %}selected{% endif %}>Returned</option>
+                    <option value="overdue" {% if status_filter == 'overdue' %}selected{% endif %}>Overdue</option>
+                    <option value="lost" {% if status_filter == 'lost' %}selected{% endif %}>Lost</option>
+                </select>
+            </div>
+            {% if status_filter %}<a href="{% url 'borrowing_history' %}" class="btn btn-outline">Clear</a>{% endif %}
+        </form>
+
+        <div class="table-responsive">
+            {% if records %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Book</th>
+                        {% if user.is_staff or user.is_superuser %}<th>Member</th>{% endif %}
+                        <th>Issue Date</th>
+                        <th>Due Date</th>
+                        <th>Return Date</th>
+                        <th>Days Overdue</th>
+                        <th>Fine</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td><a href="{% url 'book_detail' record.book.pk %}" class="table-link">{{ record.book.title }}</a></td>
+                        {% if user.is_staff or user.is_superuser %}<td>{{ record.member.get_full_name|default:record.member.username }}</td>{% endif %}
+                        <td>{{ record.issue_date }}</td>
+                        <td>{{ record.due_date }}</td>
+                        <td>{{ record.return_date|default:'—' }}</td>
+                        <td>
+                            {% if record.status in 'issued,overdue' and record.days_overdue > 0 %}
+                            <span class="badge badge-red">{{ record.days_overdue }} days</span>
+                            {% elif record.status == 'overdue' %}
+                            <span class="badge badge-red">Overdue</span>
+                            {% else %}
+                            <span class="badge badge-green">—</span>
+                            {% endif %}
+                        </td>
+                        <td>{% if record.fine_amount > 0 %}₹{{ record.fine_amount|floatformat:2 }}{% else %}—{% endif %}</td>
+                        <td>
+                            {% if record.status == 'issued' %}<span class="badge badge-blue">Issued</span>
+                            {% elif record.status == 'returned' %}<span class="badge badge-green">Returned</span>
+                            {% elif record.status == 'overdue' %}<span class="badge badge-red">Overdue</span>
+                            {% else %}<span class="badge badge-dark">Lost</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-clock-rotate-left"></i><h3>No records found</h3><p>No borrowing records match your criteria.</p></div>
+            {% endif %}
+        </div>
+
+        {% if records.has_other_pages %}
+        <div class="pagination">
+            <span class="page-info">Page {{ records.number }} of {{ records.paginator.num_pages }}</span>
+            <div class="pagination-buttons">
+                {% if records.has_previous %}
+                <a href="?page={{ records.previous_page_number }}&status={{ status_filter }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-left"></i> Prev</a>
+                {% endif %}
+                {% if records.has_next %}
+                <a href="?page={{ records.next_page_number }}&status={{ status_filter }}" class="btn btn-sm btn-outline">Next <i class="fas fa-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

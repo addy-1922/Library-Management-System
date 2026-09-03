@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Members{% endblock %}
+{% block page_title %}<span>Members</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Library Members</h2>
+        <p class="page-subtitle">Manage all registered members</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="search-bar-wrap">
+            <div class="search-input-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" name="q" value="{{ query }}" class="form-control" placeholder="Search by name, username, or member ID...">
+            </div>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+            {% if query %}<a href="{% url 'member_list' %}" class="btn btn-outline">Clear</a>{% endif %}
+        </form>
+
+        <div class="table-responsive">
+            {% if members %}
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>Member ID</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Joined</th>
+                        <th>Active</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for profile in members %}
+                    <tr>
+                        <td>
+                            <div class="avatar-cell">
+                                {% if profile.profile_image %}
+                                <img src="{{ profile.profile_image.url }}" class="table-avatar" alt="">
+                                {% else %}
+                                <div class="table-avatar placeholder">{{ profile.user.get_full_name|default:profile.user.username|slice:":1"|upper }}</div>
+                                {% endif %}
+                                <div>
+                                    <a href="{% url 'member_detail' profile.user.pk %}" class="table-link">{{ profile.user.get_full_name|default:profile.user.username }}</a>
+                                    <small class="muted">{{ profile.user.email }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="badge badge-outline">{{ profile.member_id }}</span></td>
+                        <td>{{ profile.department|default:'—' }}</td>
+                        <td>{{ profile.phone|default:'—' }}</td>
+                        <td>{{ profile.membership_date }}</td>
+                        <td>
+                            {% if profile.is_active_member %}
+                            <span class="badge badge-green">Active</span>
+                            {% else %}
+                            <span class="badge badge-red">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            <a href="{% url 'member_detail' profile.user.pk %}" class="btn btn-sm btn-outline" title="View"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'member_edit' profile.user.pk %}" class="btn btn-sm btn-outline" title="Edit"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-users"></i><p>No members found</p></div>
+            {% endif %}
+        </div>
+
+        {% if members.has_other_pages %}
+        <div class="pagination">
+            <span class="page-info">Page {{ members.number }} of {{ members.paginator.num_pages }}</span>
+            <div class="pagination-buttons">
+                {% if members.has_previous %}
+                <a href="?q={{ query }}&page={{ members.previous_page_number }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-left"></i></a>
+                {% endif %}
+                {% if members.has_next %}
+                <a href="?q={{ query }}&page={{ members.next_page_number }}" class="btn btn-sm btn-outline"><i class="fas fa-chevron-right"></i></a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

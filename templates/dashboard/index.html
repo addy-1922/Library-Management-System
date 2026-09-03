@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}<span>Dashboard</span>{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2 class="page-heading">Welcome, {{ user.get_full_name|default:user.username }}!</h2>
+        <p class="page-subtitle">Here's what's happening in the library today.</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'issue_book' %}" class="btn btn-primary"><i class="fas fa-basket-shopping"></i> Borrow Book</a>
+        <a href="{% url 'book_list' %}" class="btn btn-outline"><i class="fas fa-book"></i> Browse Books</a>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card stat-blue">
+        <div class="stat-icon"><i class="fas fa-book"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_books }}</span>
+            <span class="stat-label">Total Books</span>
+        </div>
+    </div>
+    <div class="stat-card stat-green">
+        <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_available }}</span>
+            <span class="stat-label">Available</span>
+        </div>
+    </div>
+    <div class="stat-card stat-orange">
+        <div class="stat-icon"><i class="fas fa-basket-shopping"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_issued }}</span>
+            <span class="stat-label">Issued</span>
+        </div>
+    </div>
+    <div class="stat-card stat-purple">
+        <div class="stat-icon"><i class="fas fa-users"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_members }}</span>
+            <span class="stat-label">Members</span>
+        </div>
+    </div>
+    <div class="stat-card stat-red">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ total_overdue }}</span>
+            <span class="stat-label">Overdue</span>
+        </div>
+    </div>
+    <div class="stat-card stat-indigo">
+        <div class="stat-icon"><i class="fas fa-indian-rupee-sign"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">₹{{ total_fines|floatformat:2 }}</span>
+            <span class="stat-label">Total Fines</span>
+        </div>
+    </div>
+</div>
+
+{% if chart_json %}
+<div class="chart-grid">
+    <section class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-line"></i> Monthly Borrowings</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="monthlyChart" height="120"></canvas>
+        </div>
+    </section>
+    <section class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Books by Category</h3>
+        </div>
+        <div class="card-body">
+            <canvas id="categoryChart" height="120"></canvas>
+        </div>
+    </section>
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+(function() {
+    var chartData = JSON.parse('{{ chart_json|escapejs }}');
+    var monthlyLabels = chartData.monthly_labels;
+    var monthlyData = chartData.monthly_data;
+    var categoryLabels = chartData.category_labels;
+    var categoryData = chartData.category_data;
+    if (window.Chart && document.getElementById('monthlyChart')) {
+        new Chart(document.getElementById('monthlyChart'), {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [{
+                    label: 'Borrowings',
+                    data: monthlyData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { display: false } } }
+        });
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: categoryLabels,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        'rgba(54,162,235,0.7)', 'rgba(255,99,132,0.7)', 'rgba(75,192,192,0.7)',
+                        'rgba(255,159,64,0.7)', 'rgba(153,102,255,0.7)', 'rgba(255,205,86,0.7)',
+                        'rgba(201,203,207,0.7)', 'rgba(255,87,51,0.7)'
+                    ]
+                }]
+            },
+            options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+})();
+</script>
+
+<div class="dashboard-grid">
+    <section class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-clock-rotate-left"></i> Recent Issues</h3>
+        </div>
+        <div class="card-body table-responsive">
+            {% if recent_issues %}
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Book</th><th>Member</th><th>Due Date</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_issues %}
+                    <tr>
+                        <td><a href="{% url 'book_detail' record.book.pk %}">{{ record.book.title }}</a></td>
+                        <td>{{ record.member.get_full_name|default:record.member.username }}</td>
+                        <td>{{ record.due_date }}</td>
+                        <td><span class="badge badge-blue">Issued</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-clock-rotate-left"></i><p>No recent issues</p></div>
+            {% endif %}
+        </div>
+    </section>
+
+    <section class="card">
+        <div class="card-header">
+            <h3><i class="fas fa-rotate-left"></i> Recent Returns</h3>
+        </div>
+        <div class="card-body table-responsive">
+            {% if recent_returns %}
+            <table class="table table-hover">
+                <thead>
+                    <tr><th>Book</th><th>Member</th><th>Status</th></tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_returns %}
+                    <tr>
+                        <td><a href="{% url 'book_detail' record.book.pk %}">{{ record.book.title }}</a></td>
+                        <td>{{ record.member.get_full_name|default:record.member.username }}</td>
+                        <td><span class="badge badge-green">Returned</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="empty-state"><i class="fas fa-rotate-left"></i><p>No recent returns</p></div>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+{% if overdue_books %}
+<div class="card">
+    <div class="card-header card-header-warning">
+        <h3><i class="fas fa-exclamation-triangle"></i> Overdue Books</h3>
+    </div>
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr><th>Book</th><th>Member</th><th>Due Date</th><th>Days Overdue</th><th>Fine</th></tr>
+            </thead>
+            <tbody>
+                {% for record in overdue_books %}
+                <tr>
+                    <td><a href="{% url 'book_detail' record.book.pk %}">{{ record.book.title }}</a></td>
+                    <td>{{ record.member.get_full_name|default:record.member.username }}</td>
+                    <td>{{ record.due_date }}</td>
+                    <td><span class="badge badge-red">{{ record.days_overdue }} days</span></td>
+                    <td>₹{{ record.calculated_fine|floatformat:2 }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<section class="card">
+    <div class="card-header">
+        <h3><i class="fas fa-star"></i> Popular Books</h3>
+    </div>
+    <div class="card-body table-responsive">
+        {% if popular_books %}
+        <table class="table table-hover">
+            <thead>
+                <tr><th>#</th><th>Book</th><th>Author</th><th>Borrowings</th></tr>
+            </thead>
+            <tbody>
+                {% for book in popular_books %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td><a href="{% url 'book_detail' book.pk %}">{{ book.title }}</a></td>
+                    <td>{{ book.author.name }}</td>
+                    <td><span class="badge badge-purple">{{ book.borrow_count }} times</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="empty-state"><i class="fas fa-star"></i><p>No borrowings yet</p></div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

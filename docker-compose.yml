@@ -1,0 +1,23 @@
+services:
+  web:
+    build: .
+    container_name: library-management-web
+    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+    volumes:
+      - ./media:/app/media
+      - static_volume:/app/staticfiles
+    environment:
+      DJANGO_DEBUG: "False"
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:?Set DJANGO_SECRET_KEY in a .env file}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      LIBRARY_MAX_BORROW_LIMIT: ${LIBRARY_MAX_BORROW_LIMIT:-5}
+      LIBRARY_BORROW_PERIOD_DAYS: ${LIBRARY_BORROW_PERIOD_DAYS:-14}
+      LIBRARY_FINE_INITIAL_RATE: ${LIBRARY_FINE_INITIAL_RATE:-5}
+      LIBRARY_FINE_LATE_RATE: ${LIBRARY_FINE_LATE_RATE:-10}
+      LIBRARY_FINE_FREE_DAYS: ${LIBRARY_FINE_FREE_DAYS:-7}
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+volumes:
+  static_volume:
