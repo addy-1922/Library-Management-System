@@ -216,7 +216,7 @@ Tests cover authentication, book creation/availability, issuing, returning, fine
 
 ## 👤 Author
 
-**Your Name** — [LinkedIn](https://linkedin.com/in/yourusername) · [GitHub](https://github.com/yourusername)
+**Your Name** — [LinkedIn](www.linkedin.com/in/aditya-naik-5a7b79317) · [GitHub](https://github.com/addy-1922)
 
 ---
 
