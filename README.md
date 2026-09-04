@@ -1,5 +1,5 @@
 # 📚 Library Management System
-# Get Live Demo:https://library-management-system-67oc.onrender.com
+
 
 A **full-featured, production-style Library Management System** built with Django. This is a portfolio-grade, real-world college/university library management application with role-based access control, complete book circulation workflows, automatic fine calculation, and a professional responsive UI.
 
